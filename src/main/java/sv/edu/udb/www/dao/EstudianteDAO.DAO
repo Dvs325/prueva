@@ -1,0 +1,65 @@
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
+
+public class EstudianteDAO {
+
+    private DataSource dataSource;
+
+    public EstudianteDAO() {
+        try {
+            Context ctx = new InitialContext();
+            dataSource = (DataSource) ctx.lookup("java:comp/env/jdbc/pruevas");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Estudiante> obtenerEstudiantes() throws SQLException {
+        List<Estudiante> estudiantes = new ArrayList<>();
+        String query = "SELECT * FROM estudiante";
+        try (Connection con = dataSource.getConnection();
+             Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                Estudiante est = new Estudiante();
+                est.setCarnet(rs.getString("carnet"));
+                est.setNombre(rs.getString("nombre"));
+                estudiantes.add(est);
+            }
+        }
+        return estudiantes;
+    }
+
+    public void agregarEstudiante(Estudiante est) throws SQLException {
+        String query = "INSERT INTO estudiante (carnet, nombre) VALUES (?, ?)";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, est.getCarnet());
+            pstmt.setString(2, est.getNombre());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public void actualizarEstudiante(Estudiante est) throws SQLException {
+        String query = "UPDATE estudiante SET nombre=? WHERE carnet=?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, est.getNombre());
+            pstmt.setString(2, est.getCarnet());
+            pstmt.executeUpdate();
+        }
+    }
+
+    public void eliminarEstudiante(String carnet) throws SQLException {
+        String query = "DELETE FROM estudiante WHERE carnet=?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+            pstmt.setString(1, carnet);
+            pstmt.executeUpdate();
+        }
+    }
+}
